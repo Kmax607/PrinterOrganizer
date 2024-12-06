@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Printer Status by Location</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Printer Status Report</h1>
+    <p>Last updated at: {{ last_updated }}</p>
+
+    <!-- Buttons for location selection -->
+    <button onclick="showPrinters('KC')">KC</button>
+    <button onclick="showPrinters('Pollock')">Pollock</button>
+    <button onclick="showPrinters('Findlay')">Findlay</button>
+
+    <!-- Printer table -->
+    <table id="printerTable">
+        <thead>
+            <tr>
+                <th>Printer Name</th>
+                <th>Distance</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="printerBody">
+            <!-- Content will be dynamically populated -->
+        </tbody>
+    </table>
+
+    <script>
+        // Distance data and printer names (passed from Flask)
+        const distances = {{ distances | tojson }};
+        const printerNames = {{ printer_names | tojson }};
+        const printersNeedingFixing = {{ printers | tojson }};
+
+        // Function to display printers sorted by distance
+        function showPrinters(location) {
+            const tbody = document.getElementById('printerBody');
+            tbody.innerHTML = ''; // Clear existing rows
+
+            // Get distances for the selected location
+            const locationDistances = distances[location];
+
+            // Filter and map printers needing fixing with their distances
+            const printers = printersNeedingFixing.map(printer => {
+                const index = printerNames.indexOf(printer.name);
+                return {
+                    name: printer.name,
+                    distance: locationDistances[index],
+                    status: printer.status
+                };
+            });
+
+            // Sort printers by distance
+            printers.sort((a, b) => a.distance - b.distance);
+
+            // Populate the table with sorted data
+            printers.forEach(printer => {
+                const row = document.createElement('tr');
+                const nameCell = document.createElement('td');
+                const distanceCell = document.createElement('td');
+                const statusCell = document.createElement('td');
+
+                nameCell.textContent = printer.name;
+                distanceCell.textContent = printer.distance;
+                statusCell.textContent = printer.status;
+
+                row.appendChild(nameCell);
+                row.appendChild(distanceCell);
+                row.appendChild(statusCell);
+                tbody.appendChild(row);
+            });
+        }
+
+        // Default display for KC
+        showPrinters('KC');
+    </script>
+</body>
+</html>
